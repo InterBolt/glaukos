@@ -15,5 +15,6 @@ jobs:
         with:
           node-version: 18.17.1
       - run: npm install -g yarn@1.22.19
+      - run: yarn install --frozen-lockfile
       - run: yarn ci:build
       - run: yarn ci:test
