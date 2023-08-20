@@ -2,7 +2,7 @@
 
 > Named after the greek sea god who was once a mortal fisherman. Inspired by the concept of making "god hooks" performant.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/InterBolt/glaukos/ci.yml?branch=main)](https://github.com/InterBolt/glaukos/actions?query=workflow%3ACI)
+[![CI](https://img.shields.io/github/actions/workflow/status/InterBolt/glaukos/ci.yml?branch=release)](https://github.com/InterBolt/glaukos/actions?query=workflow%3ACI)
 [![npm](https://img.shields.io/npm/v/@interbolt/glaukos)](https://www.npmjs.com/package/@interbolt/glaukos)
 [![size](https://img.shields.io/bundlephobia/minzip/@interbolt/glaukos)](https://bundlephobia.com/result?p=@interbolt/glaukos)
 

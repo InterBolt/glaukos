@@ -1,6 +1,6 @@
 {
-  "name": "glaukos",
-  "version": "0.0.0",
+  "name": "@interbolt/glaukos",
+  "version": "0.0.1-beta",
   "type": "module",
   "main": "./dist/esm/bundle.js",
   "module": "./dist/esm/bundle.js",
