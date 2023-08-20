@@ -18,3 +18,11 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: yarn ci:build
       - run: yarn ci:test
+      - name: Release
+        uses: justincy/github-action-npm-release@v1.2.0
+        id: release
+      - name: Release on change
+        if: ${{ steps.release.outputs.released == 'true' }}
+        run: npm publish —-access public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
