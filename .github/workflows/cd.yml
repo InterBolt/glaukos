@@ -1,0 +1,19 @@
+name: cd
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 18.17.1
+      - run: npm install -g yarn@1.22.19
+      - run: yarn ci:build
+      - run: yarn ci:test
