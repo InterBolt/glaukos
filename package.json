@@ -1,6 +1,6 @@
 {
   "name": "@interbolt/glaukos",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.1-beta.2",
   "type": "module",
   "main": "./dist/esm/bundle.js",
   "module": "./dist/esm/bundle.js",
@@ -10,11 +10,9 @@
     "dist"
   ],
   "scripts": {
-    "release": "npx release-it",
     "ci:build": "rimraf dist && rollup -c",
     "ci:test": "echo \"Add a test\"",
     "dev": "rollup -c -w",
-    "dev:env": "sed 's/=.*/=/' .env > env.example",
     "dev:husky": "npx husky install && chmod +x .husky/pre-commit"
   },
   "devDependencies": {
@@ -60,20 +58,5 @@
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
-  },
-  "release-it": {
-    "plugins": {
-      "@release-it-plugins/lerna-changelog": {
-        "infile": "CHANGELOG.md",
-        "launchEditor": false
-      }
-    },
-    "git": {
-      "tagName": "v${version}"
-    },
-    "github": {
-      "release": true,
-      "tokenRef": "GITHUB_AUTH"
-    }
   }
 }
