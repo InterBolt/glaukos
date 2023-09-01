@@ -68,9 +68,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/InterBolt/glaukos.git"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
-    "access": "public"
   }
 }
