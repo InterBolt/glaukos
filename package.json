@@ -56,7 +56,21 @@
     "node": "18.17.1",
     "npm": "9.6.7"
   },
+  "keywords": [
+    "react",
+    "react-hooks",
+    "state",
+    "state-management",
+    "provider",
+    "context"
+  ],
+  "homepage": "https://github.com/InterBolt/glaukos#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/InterBolt/glaukos.git"
+  },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   }
 }
