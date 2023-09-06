@@ -1,6 +1,6 @@
 {
   "name": "@interbolt/glaukos",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "type": "module",
   "main": "./dist/esm/bundle.js",
   "module": "./dist/esm/bundle.js",
@@ -22,7 +22,6 @@
     "@babel/preset-typescript": "^7.22.5",
     "@react-google-maps/api": "^2.19.2",
     "@release-it-plugins/lerna-changelog": "^5.0.0",
-    "@types/rollup-plugin-peer-deps-external": "^2.2.1",
     "@rollup/plugin-commonjs": "^25.0.4",
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@rollup/plugin-terser": "^0.4.3",
@@ -31,6 +30,7 @@
     "@types/node": "^16.7.13",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
+    "@types/rollup-plugin-peer-deps-external": "^2.2.1",
     "dotenv": "^16.3.1",
     "husky": "^8.0.3",
     "lodash": "^4.17.21",
