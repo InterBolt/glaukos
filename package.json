@@ -1,6 +1,6 @@
 {
   "name": "@interbolt/glaukos",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.13",
   "type": "module",
   "main": "./dist/esm/bundle.js",
   "module": "./dist/esm/bundle.js",
@@ -13,9 +13,7 @@
     "dev": "rollup -c -w",
     "ci:build": "rimraf dist && rollup -c",
     "ci:test": "echo \"Add a test\"",
-    "script:merge": "./scripts/gh_merge.sh",
-    "script:pr": "./scripts/gh_pr.sh",
-    "postinstall": "git submodule update --recursive --remote && chmod -R +x ./scripts/"
+    "submodules": "git submodule update --recursive --remote && chmod -R +x ./scripts/"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
