@@ -30,5 +30,4 @@ GH_TOKEN="$GH_TOKEN" gh pr merge $GH_PR_NUMBER --delete-branch --squash --auto;
 git checkout release;
 git fetch;
 git pull;
-git branch -D dev || true;
 git checkout -b dev;
