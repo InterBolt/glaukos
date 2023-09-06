@@ -11,7 +11,7 @@ source .env;
 nvm use 18;
 
 git fetch;
-git checkout release;
+git checkout --force release;
 git branch -D dev;
 
 # open the PR in browser
