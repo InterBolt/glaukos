@@ -1,6 +1,6 @@
 {
   "name": "@interbolt/glaukos",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "type": "module",
   "main": "./dist/esm/bundle.js",
   "module": "./dist/esm/bundle.js",
@@ -13,7 +13,9 @@
     "ci:build": "rimraf dist && rollup -c",
     "ci:test": "echo \"Add a test\"",
     "dev": "rollup -c -w",
-    "dev:husky": "npx husky install && chmod +x .husky/pre-commit"
+    "dev:husky": "npx husky install && chmod +x .husky/pre-commit",
+    "pr": "./scripts/pr.sh",
+    "postinstall": "chmod +x ./scripts/pr.sh"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
