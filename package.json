@@ -14,8 +14,9 @@
     "ci:test": "echo \"Add a test\"",
     "dev": "rollup -c -w",
     "dev:husky": "npx husky install && chmod +x .husky/pre-commit",
-    "pr": "./scripts/pr.sh",
-    "postinstall": "chmod +x ./scripts/pr.sh"
+    "gh:merge": "./scripts/merge.sh",
+    "gh:pr": "./scripts/pr.sh",
+    "postinstall": "chmod +x ./scripts/pr.sh && chmod +x ./scripts/merge.sh"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
