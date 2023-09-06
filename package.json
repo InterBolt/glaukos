@@ -15,7 +15,7 @@
     "ci:test": "echo \"Add a test\"",
     "script:merge": "./scripts/gh_merge.sh",
     "script:pr": "./scripts/gh_pr.sh",
-    "postinstall": "git submodule update --recursive --remote && chmod -R +x ./scripts/"
+    "submodules": "git submodule update --recursive --remote && chmod -R +x ./scripts/"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
