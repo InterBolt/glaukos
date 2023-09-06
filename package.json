@@ -1,6 +1,6 @@
 {
   "name": "@interbolt/glaukos",
-  "version": "1.0.0-alpha.9",
+  "version": "1.0.0-alpha.10",
   "type": "module",
   "main": "./dist/esm/bundle.js",
   "module": "./dist/esm/bundle.js",
@@ -14,9 +14,9 @@
     "ci:test": "echo \"Add a test\"",
     "dev": "rollup -c -w",
     "dev:husky": "npx husky install && chmod +x .husky/pre-commit",
-    "gh:merge": "./scripts/merge.sh",
-    "gh:pr": "./scripts/pr.sh",
-    "postinstall": "chmod +x ./scripts/pr.sh && chmod +x ./scripts/merge.sh"
+    "gh:merge": "./gh/merge.sh",
+    "gh:pr": "./gh/pr.sh",
+    "postinstall": "chmod +x ./gh/pr.sh && chmod +x ./gh/merge.sh"
   },
   "devDependencies": {
     "@babel/core": "^7.22.10",
