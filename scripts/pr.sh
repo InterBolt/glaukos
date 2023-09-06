@@ -34,9 +34,15 @@ git add package.json;
 git commit -m "chore: release $version";
 git push origin dev;
 
+# ensure release is up to date so we can view accurate diffs locally
+git fetch;
+git checkout release;
+git pull;
+git checkout dev;
+
 # open a new PR and view in browser
 GH_TOKEN="$GH_TOKEN" gh pr create --base "release" --head "dev" --fill-first;
-LIST_RESPONSE=$(GH_TOKEN="$GH_TOKEN" gh pr list --head "dev" --limit 1);
-PR_NUMBER=$(echo "$LIST_RESPONSE" | head -n1 | awk '{print $1;}')
 
-GH_TOKEN="$GH_TOKEN" gh pr view $PR_NUMBER --web;
+# open the PR in browser
+GH_LIST_RESPONSE=$(GH_TOKEN="$GH_TOKEN" gh pr list --head "dev" --limit 1);
+GH_TOKEN="$GH_TOKEN" gh pr view $(echo "$LIST_RESPONSE" | head -n1 | awk '{print $1;}') --web;
