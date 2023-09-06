@@ -16,7 +16,7 @@ git branch -D dev;
 
 # open the PR in browser
 GH_LIST_RESPONSE=$(GH_TOKEN="$GH_TOKEN" gh pr list --head "dev" --limit 1);
-GH_PR_NUMBER=(echo "$LIST_RESPONSE" | head -n1 | awk '{print $1;}');
+GH_PR_NUMBER=$(echo "$LIST_RESPONSE" | head -n1 | awk '{print $1;}');
 
 # merge it
 GH_TOKEN="$GH_TOKEN" gh pr merge $GH_PR_NUMBER --delete-branch --squash --auto;
