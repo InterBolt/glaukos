@@ -13,8 +13,6 @@
     "dev": "rollup -c -w",
     "ci:build": "rimraf dist && rollup -c",
     "ci:test": "echo \"Add a test\"",
-    "script:merge": "./scripts/gh_merge.sh",
-    "script:pr": "./scripts/gh_pr.sh",
     "submodules": "git submodule update --recursive --remote && chmod -R +x ./scripts/"
   },
   "devDependencies": {
