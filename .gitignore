@@ -20,6 +20,9 @@
 .env.test.local
 .env.production.local
 
+# misc scripts specific to an individual dev
+.dev.*
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

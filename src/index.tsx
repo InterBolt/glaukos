@@ -7,77 +7,18 @@ import {
   useContextSelector,
 } from "use-context-selector";
 
-/**
- * @description
- * Configuration options for glaukos
- *
- * @property {boolean} deepMemoize - if true, will use deep comparison when auto memoizing the store value
- * @note this is helpful if you have situations where nested objects in your store might change their reference despite
- * not changing their value. This is a performance optimization that can be used to prevent unnecessary re-renders.
- *
- * @property {boolean} forceAsyncHandlers - if true, will force all handlers to be async, regardless of definition
- * @note this is an optimization that ensures that the render lifecycle completes before and after handler is called
- * when we do await onSomeEvent() in the component.
- *
- * @example #1 CASE - forceAsyncHandlers=true
- * @note 'onSomeEvent' in this example is forced to become an async function despite not being defined as one.
- *
- * const useGlaukosHook = () => {
- *   return {
- *     handlers: {
- *       onSomeEvent: () => {
- *         return "some value"
- *       }
- *     }
- *   }
- * }
- * const config = { forceAsyncHandlers: true }
- * const { useHandlers } = glaukos(useGlaukosHook, config)
- *
- * const Component = () => {
- *   const { onSomeEvent } = useHandlers()
- *   const onClick = async () => {
- *     const value = await onSomeEvent()
- *     console.log(value) // will log "some value"
- *   }
- * }
- *
- * @example #2 CASE - deepMemoize=true
- * @note 'nestedObj' in this example changes its reference every second, but when we access it in the component,
- * it will only log once because of the deepMemoize config option.
- *
- * const useGlaukosHook = () => {
- *   const [nestedObj, setNestedObj] = React.useState([
- *     { id: 1, name: "foo" },
- *   ])
- *
- *   useEffect(() => {
- *     setInterval(() => { setNestedObj([{ id: 1, name: "foo" }]) }, 1000)
- *   }, [])
- *
- *   return {
- *     store: {
- *       nestedObj
- *     }
- *   }
- * }
- * const config = { deepMemoize: true }
- * const { useStore } = glaukos(useGlaukosHook, config)
- *
- * const Component = () => {
- *   const { nestedObj } = useStore()
- *   console.log(nestedObj) // will log ONLY once, despite the interval in the useGlaukosHook
- * }
- */
-type TConfig = {
-  deepMemoize?: boolean;
-  forceAsyncHandlers?: boolean;
+/* ------------------------------ Utility Types ----------------------------- */
+
+type TImpossible<K extends keyof any> = {
+  [P in K]: never;
 };
 
-/**
- * @todo research better ways to do this.
- * This is a hacky way to get around needing to deal with generic types
- */
+type TNoExtraProperties<T, U extends T = T> = U &
+  TImpossible<Exclude<keyof U, keyof T>>;
+
+type TStringLiteral<T> = T extends `${string & T}` ? T : never;
+
+// TODO: there's probably a less hacky way of doing this
 type TAnythingExceptAFunction =
   | number
   | string
@@ -94,32 +35,15 @@ type TAnythingExceptAFunction =
       [key: string]: any;
     };
 
-/**
- * @description forces all handler types to return a promise if they don't already
- */
 type TForcedPromiseReturns<K extends Record<string, (...args: any[]) => any>> =
   {
     [k in keyof K]: K[k] extends (...args: any[]) => Promise<any>
       ? K[k]
       : (...args: Parameters<K[k]>) => Promise<ReturnType<K[k]>>;
   };
-type TGlaukosRefs = Record<string, any>;
-type TGlaukosStore = Record<string, TAnythingExceptAFunction>;
 
-/**
- * @description this is a bit of a hack to ensure that handlers are named with the prefix 'on'
- */
-type TGlaukosHandlers<K> = Record<
-  K extends `on${string}`
-    ? K
-    : `CUSTOM TS ERROR: Handler names must include prefix 'on'. ex:
-onSomeEvent`,
-  (...args: any[]) => any
->;
+/* ---------------------------- Utility Functions --------------------------- */
 
-/**
- * @description logic for deep memoization
- */
 const useDeepCompareMemoize = (value: React.DependencyList) => {
   const ref = React.useRef<React.DependencyList>([]);
 
@@ -130,9 +54,6 @@ const useDeepCompareMemoize = (value: React.DependencyList) => {
   return ref.current;
 };
 
-/**
- * @description hook used to do the deep memoization
- */
 function useDeepCompareMemo<T>(
   factory: () => T,
   dependencies: React.DependencyList
@@ -140,10 +61,24 @@ function useDeepCompareMemo<T>(
   return React.useMemo(factory, useDeepCompareMemoize(dependencies));
 }
 
-/**
- * @description the return type required for the hook passed as the first param to 'glaukos'
- */
-export type TGlaukos<
+/* ------------------------------ Glaukos Types ----------------------------- */
+
+type TGlaukosOpts<Name extends string = "Glaukos"> = {
+  name: Name extends ""
+    ? `CUSTOM TS ERROR: You must pass a non empty string as the 'name' property of the options object.`
+    : Name;
+  deepMemoize?: boolean;
+  forceAsyncHandlers?: boolean;
+};
+type TGlaukosRefs = Record<string, any>;
+type TGlaukosStore = Record<string, TAnythingExceptAFunction>;
+type TGlaukosHandlers<K> = Record<
+  K extends `on${string}`
+    ? K
+    : `CUSTOM TS ERROR: Handler names must include prefix 'on'. ex: onSomeEvent`,
+  (...args: any[]) => any
+>;
+export type TGlaukosAPI<
   TValue extends {
     store?: TGlaukosStore;
     handlers?: TGlaukosHandlers<keyof TValue["handlers"]>;
@@ -151,40 +86,68 @@ export type TGlaukos<
   }
 > = TValue;
 
-/**
- * @description store constant values for each glaukos provider instance
- */
-const state: Record<
-  string,
-  {
-    handlers: any;
-    refs: any;
-  }
-> = {};
+/* ------------------------------ Global State ------------------------------ */
 
-/**
- * @description creates a set of hooks and components that can be used to access state and handlers
- * @param useHook - a user defined hook containing application logic
- * @param opts - optional config options
- * @returns { useStore, useHandlers, useRefs, Provider, BridgeProvider }
- */
+const globalStore: {
+  state: Record<
+    string,
+    {
+      handlers: any;
+      refs: any;
+    }
+  >;
+  names: Record<string, boolean>;
+} = {
+  state: {},
+  names: {},
+};
+
+/* ----------------------------------- API ---------------------------------- */
+
 const glaukos = <
-  TConfigSupplied extends TConfig = any,
-  TUseHookSupplied extends (...args: any[]) => TGlaukos<{
+  TSuppliedOpts extends TGlaukosOpts<TSuppliedOptsName>,
+  TSuppliedOptsName extends string = TSuppliedOpts["name"],
+  TUseHookSupplied extends (...args: any[]) => TGlaukosAPI<{
     store: TGlaukosStore;
     handlers: TGlaukosHandlers<keyof ReturnType<TUseHookSupplied>["handlers"]>;
     refs: TGlaukosRefs;
   }> = any
 >(
   useHook: TUseHookSupplied,
-  opts?: TConfigSupplied
+  opts: TNoExtraProperties<TGlaukosOpts<TSuppliedOptsName>, TSuppliedOpts>
 ) => {
   type TUseHookSuppliedReturn = ReturnType<TUseHookSupplied>;
 
-  const { deepMemoize = true, forceAsyncHandlers = false } = opts || {};
+  // Do a runtime check on the options so that JS users get a helpful error message
+  if (typeof opts === "undefined") {
+    throw new Error(
+      `glaukos: You must pass an options object as the second argument to glaukos(_, opts).`
+    );
+  }
 
+  if (typeof opts.name === "undefined") {
+    throw new Error(
+      `glaukos: You must pass a name as the 'name' property of the options object.`
+    );
+  }
+
+  const { deepMemoize = true, forceAsyncHandlers = false, name } = opts;
+
+  // Don't allow multiple glaukos instances to use the same name.
+  // This makes IDE auto-complete easier and prevents confusion.
+  if (typeof globalStore.names[name] !== "undefined") {
+    const duplicateNameErrorMessage = `glaukos: Provider name '${name}' has already been used. Please use a unique name for each provider.`;
+    if (process.env.NODE_ENV === "development") {
+      throw new Error(duplicateNameErrorMessage);
+    }
+    console.error(duplicateNameErrorMessage);
+  }
+
+  // Use a unique id rather than rely on the uniqueness of the name.
+  // Name uniqueness is only strongly enforced in development mode
+  // and can't be caught by the compiler.
   const providerId = uniqueId();
-  state[providerId] = {
+  globalStore.state[providerId] = {
     handlers: {},
     refs: {},
   };
@@ -242,8 +205,11 @@ const glaukos = <
 
       // Store the proxied handlers and refs in a global state object so we can access them without needing to
       // pass them to the provider.
-      state[providerId].handlers = proxiedHandlers;
-      state[providerId].refs = sourceRefs;
+      globalStore.state[providerId].handlers = proxiedHandlers;
+      globalStore.state[providerId].refs = sourceRefs;
+
+      // Save the name in global state so we can check for duplicates.
+      globalStore.names[name] = true;
     }, []);
 
     // Ensure children of our context provider don't rerender on store changes if they don't need to
@@ -306,30 +272,70 @@ const glaukos = <
 
   // A hook to access the up to date handlers.
   // Accessing it will never cause a re-render
-  function useHandlers(): TConfigSupplied["forceAsyncHandlers"] extends true
+  function useHandlers(): TSuppliedOpts["forceAsyncHandlers"] extends true
     ? TForcedPromiseReturns<TUseHookSuppliedReturn["handlers"]>
     : TUseHookSuppliedReturn["handlers"] {
     if (forceAsyncHandlers) {
-      return state[providerId].handlers as TForcedPromiseReturns<
+      return globalStore.state[providerId].handlers as TForcedPromiseReturns<
         TUseHookSuppliedReturn["handlers"]
       >;
     }
-    return state[providerId].handlers as TUseHookSuppliedReturn["handlers"];
+    return globalStore.state[providerId]
+      .handlers as TUseHookSuppliedReturn["handlers"];
   }
 
   // A hook to access the refs.
   // Accessing it will never cause a re-render
   function useRefs(): TUseHookSuppliedReturn["refs"] {
-    return state[providerId].refs as TUseHookSuppliedReturn["refs"];
+    return globalStore.state[providerId].refs as TUseHookSuppliedReturn["refs"];
   }
 
-  return {
-    useStore,
-    useHandlers,
-    useRefs,
-    BridgeProvider,
-    Provider,
+  type ReturnedUseStore<
+    Key extends TStringLiteral<string>,
+    ReturnType extends any
+  > = {
+    [K in `use${Key}Store`]: ReturnType;
   };
+
+  type ReturnedUseHandlers<
+    Key extends TStringLiteral<string>,
+    ReturnType extends any
+  > = {
+    [K in `use${Key}Handlers`]: ReturnType;
+  };
+
+  type ReturnedUseRefs<
+    Key extends TStringLiteral<string>,
+    ReturnType extends any
+  > = {
+    [K in `use${Key}Refs`]: ReturnType;
+  };
+
+  type ReturnedProvider<
+    Key extends TStringLiteral<string>,
+    ReturnType extends any
+  > = {
+    [K in `${Key}Provider`]: ReturnType;
+  };
+
+  type ReturnedBridgeProvider<
+    Key extends TStringLiteral<string>,
+    ReturnType extends any
+  > = {
+    [K in `${Key}BridgeProvider`]: ReturnType;
+  };
+
+  return {
+    [`use${name}Store` as const]: useStore,
+    [`use${name}Handlers` as const]: useHandlers,
+    [`use${name}Refs` as const]: useRefs,
+    [`${name}BridgeProvider` as const]: BridgeProvider,
+    [`${name}Provider`]: Provider,
+  } as any as ReturnedUseStore<TSuppliedOpts["name"], typeof useStore> &
+    ReturnedUseHandlers<TSuppliedOpts["name"], typeof useHandlers> &
+    ReturnedUseRefs<TSuppliedOpts["name"], typeof useRefs> &
+    ReturnedBridgeProvider<TSuppliedOpts["name"], typeof BridgeProvider> &
+    ReturnedProvider<TSuppliedOpts["name"], typeof Provider>;
 };
 
 export default glaukos;
