@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "dev": "rollup -c -w",
+    "dev": "rollup -c -w --watch.onEnd=\"sh .dev.onWatchEnd.sh || true\"",
     "ci:build": "rimraf dist && rollup -c",
     "ci:test": "echo \"Add a test\"",
     "submodules": "git submodule update --recursive --remote && chmod -R +x ./scripts/"

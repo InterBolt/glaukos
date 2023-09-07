@@ -33,7 +33,7 @@ if [ -f "package.json" ]; then
   # Bump version and commit the new package.json version
   yarn version $VERSION --no-git-tag-version;
   git add package.json;
-  git commit -m "chore: release $version";
+  git commit -m "chore: release $VERSION";
   git push origin $CHECKED_OUT_BRANCH;
 fi
 
