@@ -197,7 +197,7 @@ type TGlaukosConfig = {
 
 #### Config Options
 
-- `name: string` [required] - A unique name that dictates the return type of `glaukos`. ex: When config.name is `MyScreen` the return type will be:
+- `name` [required] - `string`: A unique name that dictates the return type of `glaukos`. ex: When config.name is `MyScreen` the return type will be:
 
   ```typescript
   type TReturnType = {
@@ -209,9 +209,9 @@ type TGlaukosConfig = {
   }
   ```
 
-- `deepMemoize: boolean` [optional, default=true] - When true, glaukos does a deep memoization on the store object defined in `useGlaukosHook`'s return value.
+- `deepMemoize` [optional, default=true] - `boolean`: When true, glaukos does a deep memoization on the store object defined in `useGlaukosHook`'s return value.
 
-- `forceAsyncHandlers: boolean` [optional, default=false] - When set to true, all handlers are wrapped in a function that returns a promise. This is a slight optimization to ensure that handlers don't block the current render. This is doing what [Vue's nextTick does automatically](https://vuejs.org/api/general.html#nexttick).
+- `forceAsyncHandlers` [optional, default=false] - `boolean`: When set to true, all handlers are wrapped in a function that returns a promise. This is a slight optimization to ensure that handlers don't block the current render. This is doing what [Vue's nextTick does automatically](https://vuejs.org/api/general.html#nexttick).
 
 ## glaukos return properties
 
@@ -324,9 +324,7 @@ unless we “bridge” the context over to the new render tree.
 
 #### Props
 
-- `renderer` [required] - `(children: JSX.Element) => JSX.Element` -
-  Function to render the component that is responsible for creating a
-  new render tree.
+- `renderer` [required] - `(children: JSX.Element) => JSX.Element`: Function to render the component that is responsible for creating a new render tree.
 
 #### Usage
 
