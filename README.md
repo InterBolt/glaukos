@@ -10,8 +10,8 @@
 
 # Table of Contents
 
-- [Motivation](#-motivation)
-- [Install](#install-required-peer-dependency)
+- [Motivation](#motivation)
+- [Install](#installation)
 - [Usage](#usage)
 - [API](#api)
 - [How to test?](#how-to-test)
@@ -21,9 +21,7 @@ _Warning: This is experimental. Use at your own risk._
 
 # Motivation
 
-A common mistake React devs make is to create one or several overly ambitious custom React hooks that contain too many state changes and define too many handlers. These hooks can [cause potentially expensive re-renders](https://www.developerway.com/posts/why-custom-react-hooks-could-destroy-your-app-performance) when called higher up the render tree. Most developers avoid this problem by breaking their app logic in to smaller custom hooks, memoizing portions of the render tree, or incorporating a redux-like store for frequently changing state. But this can lead to a lot of boilerplate and hard to reason about state for anyone new to the application.
-
-What if we could ditch the complexity and write all of our app logic in a single React hook without worrying about re-renders? That’s what `glaukos` is for.
+Everything you need to know in a single [blog post](https://interbolt.org/blog/glaukos).
 
 # Installation
 
@@ -198,7 +196,7 @@ type TGlaukosConfig = {
 
 #### Config Options
 
-- [required] `name: string` - A unique name that dictates the return type of `glaukos`. ex: When config.name is `MyScreen` the return type will be:
+- `name: string` [required] - A unique name that dictates the return type of `glaukos`. ex: When config.name is `MyScreen` the return type will be:
 
   ```typescript
   type TReturnType = {
@@ -210,9 +208,9 @@ type TGlaukosConfig = {
   }
   ```
 
-- [optional, default=true] `deepMemoize: boolean` - When true, glaukos does a deep memoization on the store object defined in `useGlaukosHook`'s return value.
+- `deepMemoize: boolean` [optional, default=true] - When true, glaukos does a deep memoization on the store object defined in `useGlaukosHook`'s return value.
 
-- [optional, default=false] `forceAsyncHandlers: boolean` - When set to true, all handlers are wrapped in a function that returns a promise. This is a slight optimization to ensure that handlers don't block the current render. This is doing what [Vue's nextTick does automatically](https://vuejs.org/api/general.html#nexttick).
+- `forceAsyncHandlers: boolean` [optional, default=false] - When set to true, all handlers are wrapped in a function that returns a promise. This is a slight optimization to ensure that handlers don't block the current render. This is doing what [Vue's nextTick does automatically](https://vuejs.org/api/general.html#nexttick).
 
 ## glaukos return properties
 
@@ -240,7 +238,7 @@ change to the store will trigger a re-render.
 
 #### Parameters
 
-1. [optional] `selector` - `(store: Store) => Partial<Store>`
+1. `selector` [optional] - `(store: Store) => Partial<Store>`
 
 #### Usage
 
@@ -304,8 +302,8 @@ type Refs = {
   counterDomRef: React.RefObject<HTMLDivElement>
 }
 
-// No matter which handlers you access a re-render will never happen
-// when calling use[Named]Handlers
+// No matter which refs you access a re-render will never happen
+// when calling use[Named]Refs
 const { counterDomRef } = use[Named]Refs()
 ```
 
@@ -325,7 +323,7 @@ unless we “bridge” the context over to the new render tree.
 
 #### Props
 
-- [required] `renderer` - `(children: JSX.Element) => JSX.Element` -
+- `renderer` [required] - `(children: JSX.Element) => JSX.Element` -
   Function to render the component that is responsible for creating a
   new render tree.
 
