@@ -16,6 +16,7 @@
 - [API](#api)
 - [How to test?](#how-to-test)
 - [Why not vanilla React contexts, redux, or something like Zustand?](#why-not-vanilla-react-contexts-redux-or-something-like-zustand)
+- [Hire Me](#hire-me)
 
 _Warning: This is experimental. Use at your own risk._
 
@@ -462,3 +463,9 @@ If we supply the output of a hook to a vanilla context provider we’ll have to 
 ## Why not redux?
 
 Redux is fine but once we can use hooks and distribute their return values down a render tree without triggering re-renders it ends up being redundant. If you really want reducer style state use `React.useReducer` in the hook you pass to `glaukos`
+
+# Hire Me
+
+You can reach me at [cc13.engineering@gmail.com](cc13.engineering@gmail.com).
+
+My primary expertise is React but don't hesitate to reach out if you have a project that requires something else. I'm always looking to learn new things.
