@@ -5,7 +5,11 @@ import {
   createContext as createSelectableContext,
   useBridgeValue,
   useContextSelector,
+  useContextUpdate,
 } from "use-context-selector";
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
 
 /* ------------------------------ Utility Types ----------------------------- */
 
@@ -42,7 +46,7 @@ type TForcedPromiseReturns<K extends Record<string, (...args: any[]) => any>> =
       : (...args: Parameters<K[k]>) => Promise<ReturnType<K[k]>>;
   };
 
-/* ---------------------------- Utility Functions --------------------------- */
+/* ---------------------------- Utility Hooks ------------------------------ */
 
 const useDeepCompareMemoize = (value: React.DependencyList) => {
   const ref = React.useRef<React.DependencyList>([]);
@@ -53,6 +57,16 @@ const useDeepCompareMemoize = (value: React.DependencyList) => {
 
   return ref.current;
 };
+
+function useDeepCompareLayoutEffect<T>(
+  factory: React.EffectCallback,
+  dependencies: React.DependencyList
+) {
+  return useIsomorphicLayoutEffect(
+    factory,
+    useDeepCompareMemoize(dependencies)
+  );
+}
 
 function useDeepCompareMemo<T>(
   factory: () => T,
@@ -67,17 +81,19 @@ type TGlaukosOpts<Name extends string = "Glaukos"> = {
   name: Name extends ""
     ? `CUSTOM TS ERROR: You must pass a non empty string as the 'name' property of the options object.`
     : Name;
-  deepMemoize?: boolean;
-  forceAsyncHandlers?: boolean;
 };
+
 type TGlaukosRefs = Record<string, any>;
+
 type TGlaukosStore = Record<string, TAnythingExceptAFunction>;
+
 type TGlaukosHandlers<K> = Record<
   K extends `on${string}`
     ? K
     : `CUSTOM TS ERROR: Handler names must include prefix 'on'. ex: onSomeEvent`,
   (...args: any[]) => any
 >;
+
 export type TGlaukosAPI<
   TValue extends {
     store?: TGlaukosStore;
@@ -86,9 +102,9 @@ export type TGlaukosAPI<
   }
 > = TValue;
 
-/* ------------------------------ Global State ------------------------------ */
+/* ------------------------------ External State ---------------------------- */
 
-const globalStore: {
+const externalStore: {
   state: Record<
     string,
     {
@@ -100,6 +116,25 @@ const globalStore: {
 } = {
   state: {},
   names: {},
+};
+
+/* ----------------------------- Custom Hooks ------------------------------- */
+
+const useConcurrentStore = (ctx: any, store: any) => {
+  const update = useContextUpdate(ctx);
+
+  const [concurrentSafeStore, setConcurrentSafeStore] = React.useState(store);
+
+  useDeepCompareLayoutEffect(() => {
+    update(() => setConcurrentSafeStore(store), { suspense: true });
+  }, [store]);
+
+  const memoizedConcurrentStore = useDeepCompareMemo(
+    () => concurrentSafeStore,
+    [concurrentSafeStore]
+  );
+
+  return memoizedConcurrentStore;
 };
 
 /* ----------------------------------- API ---------------------------------- */
@@ -131,11 +166,11 @@ const glaukos = <
     );
   }
 
-  const { deepMemoize = true, forceAsyncHandlers = false, name } = opts;
+  const { name } = opts;
 
   // Don't allow multiple glaukos instances to use the same name.
   // This makes IDE auto-complete easier and prevents confusion.
-  if (typeof globalStore.names[name] !== "undefined") {
+  if (typeof externalStore.names[name] !== "undefined") {
     const duplicateNameErrorMessage = `glaukos: Provider name '${name}' has already been used. Please use a unique name for each provider.`;
     if (process.env.NODE_ENV === "development") {
       throw new Error(duplicateNameErrorMessage);
@@ -147,7 +182,7 @@ const glaukos = <
   // Name uniqueness is only strongly enforced in development mode
   // and can't be caught by the compiler.
   const providerId = uniqueId();
-  globalStore.state[providerId] = {
+  externalStore.state[providerId] = {
     handlers: {},
     refs: {},
   };
@@ -179,24 +214,18 @@ const glaukos = <
       const proxiedHandlers = {} as any;
       Object.keys(sourceHandlers).forEach((key) => {
         proxiedHandlers[key] = (...args: any[]) => {
-          // Return functions as is.
-          // Useful if introducing glaukos to an existing codebase where we can't easily refactor away all sync handlers.
-          if (!forceAsyncHandlers) {
-            return (handlersRef.current as any)[key](...args);
-          }
-
-          // Wrap all handlers in a promise so that we can use setTimeouts before and after to ensure that we don't
-          // trigger re-renders before the previous render has finished and that we don't trigger re-renders in subsequent
-          // renders if the handler is called multiple times.
           return new Promise((resolve, reject) => {
-            setTimeout(async () => {
-              try {
-                const response = await (handlersRef.current as any)[key](
-                  ...args
-                );
-                setTimeout(() => resolve(response));
-              } catch (err) {
-                reject(err);
+            setTimeout(() => {
+              const response = (handlersRef.current as any)[key](...args);
+
+              const isResponsePromise =
+                typeof response === "object" &&
+                response &&
+                typeof response.then === "function";
+              if (isResponsePromise) {
+                response.then(resolve).catch(reject);
+              } else {
+                resolve(response);
               }
             });
           });
@@ -205,24 +234,20 @@ const glaukos = <
 
       // Store the proxied handlers and refs in a global state object so we can access them without needing to
       // pass them to the provider.
-      globalStore.state[providerId].handlers = proxiedHandlers;
-      globalStore.state[providerId].refs = sourceRefs;
+      externalStore.state[providerId].handlers = proxiedHandlers;
+      externalStore.state[providerId].refs = sourceRefs;
 
       // Save the name in global state so we can check for duplicates.
-      globalStore.names[name] = true;
+      externalStore.names[name] = true;
     }, []);
 
     // Ensure children of our context provider don't rerender on store changes if they don't need to
     // access the store.
     const memoizedChildren = React.useMemo(() => children, []);
-
-    // Memoize the store to prevent unnecessary re-renders.
-    const memoizedStore = deepMemoize
-      ? useDeepCompareMemo(() => store, [store])
-      : React.useMemo(() => store, [store]);
+    const concurrentStore = useConcurrentStore(Context, store);
 
     return (
-      <Context.Provider value={memoizedStore}>
+      <Context.Provider value={concurrentStore}>
         {memoizedChildren}
       </Context.Provider>
     );
@@ -272,22 +297,19 @@ const glaukos = <
 
   // A hook to access the up to date handlers.
   // Accessing it will never cause a re-render
-  function useHandlers(): TSuppliedOpts["forceAsyncHandlers"] extends true
-    ? TForcedPromiseReturns<TUseHookSuppliedReturn["handlers"]>
-    : TUseHookSuppliedReturn["handlers"] {
-    if (forceAsyncHandlers) {
-      return globalStore.state[providerId].handlers as TForcedPromiseReturns<
-        TUseHookSuppliedReturn["handlers"]
-      >;
-    }
-    return globalStore.state[providerId]
-      .handlers as TUseHookSuppliedReturn["handlers"];
+  function useHandlers(): TForcedPromiseReturns<
+    TUseHookSuppliedReturn["handlers"]
+  > {
+    return externalStore.state[providerId].handlers as TForcedPromiseReturns<
+      TUseHookSuppliedReturn["handlers"]
+    >;
   }
 
   // A hook to access the refs.
   // Accessing it will never cause a re-render
   function useRefs(): TUseHookSuppliedReturn["refs"] {
-    return globalStore.state[providerId].refs as TUseHookSuppliedReturn["refs"];
+    return externalStore.state[providerId]
+      .refs as TUseHookSuppliedReturn["refs"];
   }
 
   type ReturnedUseStore<

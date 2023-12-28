@@ -15,8 +15,6 @@
 - [Usage](#usage)
 - [API](#api)
 - [How to test?](#how-to-test)
-- [Why not vanilla React contexts, redux, or something like Zustand?](#why-not-vanilla-react-contexts-redux-or-something-like-zustand)
-- [Hire Me](#hire-me)
 
 _Warning: This is experimental. Use at your own risk._
 
@@ -190,8 +188,6 @@ Besides the required return type, there are no rules about what you can/can’t 
 ```typescript
 type TGlaukosConfig = {
   name: string; // cannot be an empty string!
-  deepMemoize?: boolean;
-  forceAsyncHandlers?: boolean;
 };
 ```
 
@@ -208,10 +204,6 @@ type TGlaukosConfig = {
     MyScreenBridgeProvider: ...,
   }
   ```
-
-- `deepMemoize` [optional, default=true] - `boolean`: When true, glaukos does a deep memoization on the store object defined in `useGlaukosHook`'s return value.
-
-- `forceAsyncHandlers` [optional, default=false] - `boolean`: When set to true, all handlers are wrapped in a function that returns a promise. This is a slight optimization to ensure that handlers don't block the current render. This is doing what [Vue's nextTick does automatically](https://vuejs.org/api/general.html#nexttick).
 
 ## glaukos return properties
 
@@ -261,17 +253,17 @@ const { quote } = use[Named]Store((store) => ({
 // WITHOUT SELECTOR:
 // A re-render will happen any time the following values change:
 // store.count, store.quote, store.likes, store.savedItems, or store.purchases.
-// note: reference changes can be ignored by setting config.deepMemoize=true
 const { quote } = use[Named]Store();
 ```
 
 ### use[Named]Handlers
 
-This hook returns an up-to-date object containing all of the handlers
-as defined in `useGlaukosHook` Calling this hook will never trigger a
-re-render even if the handlers change.
-
-When `config.forceAsyncHandlers` is set to true, all handlers will be wrapped in a function that returns a promise.
+This hook returns an object containing all of the handlers
+as defined in `useGlaukosHook`. Any sync functions are converted into
+async functions which resolves after a zero setTimeout callback runs.
+This somewhat mimics vue's [nextTick](https://vuejs.org/api/general.html#nexttick) behavior.
+Though I assume when used in concurrent mode the async function might resolve after only a portion of the rendering completes.
+_Calling this hook will never trigger a re-render even if the handlers change._
 
 #### Usage
 
@@ -390,80 +382,3 @@ import { useGlaukosHook } from "./SomeScreen.tsx";
 Hooks are easy to test but if `useGlaukosHook` is too monolithic to
 test on its own, you can always test the hooks that it composes
 instead. Whatever makes sense.
-
-# Why not vanilla React contexts, redux, or something like Zustand?
-
-The goal of `glaukos` is to consolidate ALL app logic (state,
-effects, handlers) down to “just a few hooks”. This patterns makes
-code more accessible to new programmers and sets us up to write more
-meaningful tests.
-
-## Zustand comparison
-
-Lets look at the example zustand provides at the top of their docs.
-
-```typescript
-import { create } from "zustand";
-
-const useBearStore = create((set) => ({
-  bears: 0,
-  increasePopulation: () => set((state) => ({ bears: state.bears + 1 })),
-  removeAllBears: () => set({ bears: 0 }),
-}));
-```
-
-Let’s rewrite the zustand code above using `glaukos`:
-
-```typescript
-import glaukos from '@interbolt/glaukos';
-
-const useGlaukosHook = () => {
-  const [bears, setBears] = React.useState(0)
-  const onIncreasePopulation = () => setBears((bears) => bears + 1)
-  const onRemoveAllBears = () => setBears(0)
-
-  return {
-    store: {
-      bears,
-    },
-    handlers: {
-      onIncreasePopulation,
-      onRemoveAllBears,
-    },
-    refs: {}
-  }
-}
-
-const { NamedProvider } = glaukos(useGlaukosHook, { name: 'Named' })
-
-const YourScreen = () => {
-  return (
-    <NamedProvider>
-      <ScreenComponentA />
-      <ScreenComponentB />
-    </NamedProvider>
-  )
-}
-
-...
-...
-...
-```
-
-The zustand code is terse but requires we learn some non-react things like what `create` does, `set` does, what other params `create` might have, and what other utilities we might need from the `‘zustand’` library to build robust logic. In the `glaukos` example we have to be more verbose and use a provider but in the section where we define the logic we only need to understand how to use `React.useState` hook works.
-
-## Why not vanilla React contexts?
-
-If we supply the output of a hook to a vanilla context provider we’ll have to deal with lots of re-renders further down the render tree. Vanilla react contexts should be used primarily for state that doesn’t change often. From the react docs:
-
-> All consumers that are descendants of a Provider will re-render whenever the Provider’s `value` prop changes. The propagation from Provider to its descendant consumers is not subject to the `shouldComponentUpdate` method, so the consumer is updated even when an ancestor component skips an update.
-
-## Why not redux?
-
-Redux is fine but once we can use hooks and distribute their return values down a render tree without triggering re-renders it ends up being redundant. If you really want reducer style state use `React.useReducer` in the hook you pass to `glaukos`
-
-# Hire Me
-
-You can reach me at [cc13.engineering@gmail.com](cc13.engineering@gmail.com).
-
-My primary expertise is React but don't hesitate to reach out if you have a project that requires something else. I'm always looking to learn new things.
